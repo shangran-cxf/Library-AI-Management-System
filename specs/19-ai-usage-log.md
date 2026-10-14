@@ -47,11 +47,17 @@ Trae（AI 编码 Agent）
 
 ### 人工审查结果
 
-待人工逐项对照 `18-review-checklist.md` 审查。（待填）
+已对照 `18-review-checklist.md` 逐条审查，**34/34 项通过**（详见该文件 §8 审查结论）。
+遗留 3 项（罚款结清状态、标题删除级联、权威字段名）转入实验二处理。
 
 ### Git 提交
 
-`docs: 生成实验一 Specs`
+- `docs: 生成实验一 Specs`
+- `docs: 补齐命名一致性规约与审查结论`
+
+### 冻结
+
+`experiment1-specs-baseline-v1`
 
 ---
 

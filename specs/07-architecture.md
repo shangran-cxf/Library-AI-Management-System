@@ -111,3 +111,18 @@ Library-AI-Management-System/
     exceptions/        # 自定义异常
   tests/               # 测试层
 ```
+
+## 10. 命名与字段一致性规约
+
+为满足"API 字段名与数据库、领域模型、Agent 提示词一致"的要求，统一约定：
+
+| 载体 | 命名风格 | 示例 |
+|---|---|---|
+| 数据库列名（spec 13） | snake_case | `reader_id`、`card_no`、`borrow_date` |
+| API / JSON 字段（spec 14，**权威**） | snake_case | `reader_id`、`book_id`、`code`、`due_date` |
+| Agent 提示词 / 文档 | snake_case | 同上 |
+| UML 类图属性（spec 05、06） | camelCase（类图惯例） | `readerId`、`cardNo`、`borrowDate` |
+
+- 映射规则：**camelCase ↔ snake_case 一一对应**（`borrowDate` ↔ `borrow_date`），不省略、不起别名。
+- **权威来源**：穿过 API 边界的字段名一律以 `14-api-spec.md`（实验二产出）为准，数据库列名与之保持一致。
+- 禁止同一概念出现两种对外写法（如 `userId` 与 `user_id` 混用）。
