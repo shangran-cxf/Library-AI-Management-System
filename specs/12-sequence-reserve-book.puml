@@ -1,0 +1,54 @@
+@startuml 顺序图 - UC-004 预约图书
+autonumber
+skinparam sequenceMessageAlign center
+
+actor "读者" as ReaderUser
+participant "ReaderController" as Controller
+participant "ReservationService" as Service
+participant "ReaderRepository" as ReaderRepo
+participant "BookTitleRepository" as TitleRepo
+participant "ReservationRepository" as ResRepo
+participant "Reader" as Reader
+participant "BookTitle" as Title
+participant "Reservation" as Reservation
+
+ReaderUser -> Controller : reserve(reader_id, title_id)
+Controller -> Service : reserve(reader_id, title_id)
+
+' 1. 校验读者
+Service -> ReaderRepo : get_by_id(reader_id)
+ReaderRepo --> Service : reader
+alt 读者不存在
+    Service --> Controller : raise NotFoundError("读者不存在")
+    Controller --> ReaderUser : 400 读者不存在
+else 读者存在
+    ' 2. 校验图书标题
+    Service -> TitleRepo : get_by_id(title_id)
+    TitleRepo --> Service : title
+    alt 标题不存在
+        Service --> Controller : raise NotFoundError("图书标题不存在")
+        Controller --> ReaderUser : 400 图书标题不存在
+    else 标题存在
+        ' 3. 重复预约检查
+        Service -> ResRepo : get_active(reader_id, title_id)
+        ResRepo --> Service : existing
+        alt existing 不为空
+            Service --> Controller : raise DuplicateError("您已预约过该书")
+            Controller --> ReaderUser : 400 您已预约过该书
+        else 无重复预约
+            ' 4. 创建预约并入队
+            Service -> Reservation : create(reader_id, title_id, created_at)
+            Reservation --> Service : reservation(status=ACTIVE)
+            Service -> ResRepo : save(reservation)
+            ResRepo --> Service : reservation
+            Service -> ResRepo : list_queue(title_id)
+            ResRepo --> Service : queue
+            Service -> Reservation : setQueuePosition(position)
+            Reservation --> Service : ok
+            Service --> Controller : ReservationResponse(queue_position)
+            Controller --> ReaderUser : 200 预约成功（排队序号）
+        end
+    end
+end
+
+@enduml
