@@ -65,32 +65,113 @@ Trae（AI 编码 Agent）
 
 ### 使用工具
 
-（待填）
+Trae（AI 编码 Agent）
 
 ### 使用阶段
 
-（待填）
+实验二 · 详细设计建模
 
 ### 使用任务
 
-（待填）
+根据实验一已冻结的 baseline 与实验二指导书，生成详细设计 Specs：
+详细设计模型、办理借书 / 办理还书 / 预约图书顺序图、API 接口规范、测试计划、任务拆解。
 
 ### 输入 Prompt 摘要
 
-（待填）
+要求 Agent 以用例为单元给出 Controller / Application Service / Domain Service / Entity /
+Repository / DTO / 异常 / 事务边界的详细设计；生成三个关键用例的 PlantUML 顺序图；
+产出 REST API 规范（含权限与成功 / 失败场景，并固化权威字段名表）；
+产出以 TC 编号的测试计划与可执行的 tasks.md；技术栈 Python FastAPI。
 
-### Agent 修改文件
+### Agent 生成 / 修改文件
 
-（待填）
+- specs/09-design-model.md
+- specs/10-sequence-borrow-book.puml
+- specs/11-sequence-return-book.puml
+- specs/12-sequence-reserve-book.puml
+- specs/14-api-spec.md
+- specs/15-test-plan.md
+- specs/16-tasks.md
 
 ### 测试结果
 
-（待填）
+本阶段为文档建模，暂无可执行测试。已按实验二审查要点自检：
+顺序图与用例一致、API 覆盖核心用例、测试计划覆盖异常流程、业务规则位于正确分层、
+体现 Strategy / Repository / Service Layer 等模式、与数据库设计一致。
 
 ### 人工审查结果
 
-（待填）
+逐条自检通过；用户确认后冻结实验二 Spec baseline。遗留字段名以 `14-api-spec.md` 为准。
 
 ### Git 提交
 
-（待填）
+- `docs: 生成实验二详细设计模型 09-design-model`
+- `docs: 生成办理借书顺序图 10-sequence-borrow-book`
+- `docs: 生成办理还书顺序图 11-sequence-return-book`
+- `docs: 生成预约图书顺序图 12-sequence-reserve-book`
+- `docs: 生成 API 接口规范 14-api-spec`
+- `docs: 生成测试计划 15-test-plan`
+- `docs: 生成实现任务拆解 16-tasks`
+
+### 冻结
+
+`experiment2-specs-baseline-v1`
+
+---
+
+## 第 3 次使用
+
+### 使用工具
+
+Trae（AI 编码 Agent）
+
+### 使用阶段
+
+实验二 · 代码实现与测试
+
+### 使用任务
+
+按 `16-tasks.md` 顺序实现分层代码与自动化测试：初始化项目结构、领域实体、Repository、
+借阅规则策略、罚款规则策略、读者与借阅证管理、图书标题与馆藏管理、借书、还书、预约、
+查询借阅、管理员维护与权限，并补齐测试与 README。
+
+### 输入 Prompt 摘要
+
+要求 Agent 严格按冻结的 specs 实现，不得修改 specs；分层架构（routers / services / domain /
+repositories），借阅数量与期限集中在 BorrowPolicyService、费率集中在 FineRuleService；
+统一响应 `{code,message,data}`；pytest + httpx 覆盖借书 / 还书 / 预约 / 超期罚款 / 权限失败。
+
+### Agent 修改文件
+
+- src/main.py、src/database.py、src/response.py、src/security.py、src/deps.py
+- src/domain/（enums.py、models.py、services.py）
+- src/repositories/（reader_repo、card_repo、admin_repo、catalog_repo、circulation_repo、
+  reservation_repo、policy_repo）
+- src/services/（reader_service、card_service、catalog_service、fine_service、
+  circulation_service、reservation_service、admin_service、policy_service）
+- src/routers/（reader_router、card_router、catalog_router、circulation_router、
+  reservation_router、admin_router）
+- src/schemas/（requests.py）、src/exceptions/（__init__.py）
+- tests/（conftest.py、test_policy、test_reader_card、test_catalog、test_circulation、
+  test_reservation、test_admin）
+- requirements.txt、pytest.ini、README.md
+
+### 测试结果
+
+`pytest` 共 38 项测试全部通过（策略单元测试 + 接口集成测试）。
+
+### 人工审查结果
+
+实现过程中发现并修正两处问题：
+① 借阅数量统计方法应位于 `ReaderRepository.count_borrowing`（与 `09-design-model.md` 一致），
+初次误置于 `LoanRepository`，已改正；
+② 角色权限基于请求携带的 ID 判断，测试种子数据需保证管理员 ID 与读者 ID 不重叠，已显式指定。
+上述修正均只改代码，未改动已冻结 specs。
+
+### Git 提交
+
+- `feat: 实现分层架构与领域实体、仓储、策略`
+- `feat: 实现借书/还书/预约/查询/管理用例`
+- `test: 补充策略与接口测试`
+- `docs: 更新 README`
+
