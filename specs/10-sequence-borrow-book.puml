@@ -1,0 +1,73 @@
+@startuml 顺序图 - UC-101 办理借书
+autonumber
+skinparam sequenceMessageAlign center
+
+actor "图书管理员" as Librarian
+participant "LibrarianController" as Controller
+participant "CirculationService" as Service
+participant "BorrowCardRepository" as CardRepo
+participant "ReaderRepository" as ReaderRepo
+participant "LoanRepository" as LoanRepo
+participant "LibraryItemRepository" as ItemRepo
+participant "BorrowPolicyService" as Policy
+participant "Reader" as Reader
+participant "LibraryItem" as Item
+participant "Loan" as Loan
+
+Librarian -> Controller : borrow(card_no, barcode, librarian_id)
+Controller -> Service : borrow(card_no, barcode, librarian_id)
+
+' 1. 校验借阅证
+Service -> CardRepo : get_by_card_no(card_no)
+CardRepo --> Service : card
+Service -> Reader : isValid(card)
+alt 借阅证不存在或已失效
+    Service --> Controller : raise CardInvalidError("借阅证无效")
+    Controller --> Librarian : 400 借阅证无效
+else 借阅证有效
+    Service -> ReaderRepo : get_by_id(card.reader_id)
+    ReaderRepo --> Service : reader
+
+    ' 2. 借阅数量检查
+    Service -> ReaderRepo : count_borrowing(reader.reader_id)
+    ReaderRepo --> Service : current_count
+    Service -> Policy : get_max_borrow_count(reader.reader_type)
+    Policy --> Service : max_count
+    alt current_count >= max_count
+        Service --> Controller : raise BorrowLimitExceededError("借阅已满")
+        Controller --> Librarian : 400 借阅已满
+    else 未超数量
+        ' 3. 超期未还检查
+        Service -> LoanRepo : has_overdue(reader.reader_id)
+        LoanRepo --> Service : has_overdue
+        alt 存在超期未还
+            Service --> Controller : raise OverdueBooksError("请先归还超期图书")
+            Controller --> Librarian : 400 请先归还超期图书
+        else 无超期
+            ' 4. 副本可借检查
+            Service -> ItemRepo : get_by_barcode(barcode)
+            ItemRepo --> Service : item
+            Service -> Item : isAvailable()
+            alt 副本不存在或不可借
+                Service --> Controller : raise ItemNotAvailableError("图书不可借")
+                Controller --> Librarian : 400 图书不可借
+            else 可借
+                ' 5. 计算应还日期并创建借阅
+                Service -> Policy : get_borrow_days(reader.reader_type)
+                Policy --> Service : borrow_days
+                Service -> Loan : create(reader, item, borrow_days)
+                Loan --> Service : loan(due_date)
+                Service -> LoanRepo : save(loan)
+                LoanRepo --> Service : loan
+                Service -> Item : markBorrowed()
+                Item --> Service : status = BORROWED
+                Service -> ItemRepo : save(item)
+                ItemRepo --> Service : item
+                Service --> Controller : BorrowResponse(loan_id, due_date)
+                Controller --> Librarian : 200 借书成功
+            end
+        end
+    end
+end
+
+@enduml
