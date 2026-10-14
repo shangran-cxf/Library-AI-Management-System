@@ -1,0 +1,65 @@
+@startuml 顺序图 - UC-102 办理还书
+autonumber
+skinparam sequenceMessageAlign center
+
+actor "图书管理员" as Librarian
+participant "LibrarianController" as Controller
+participant "CirculationService" as Service
+participant "LibraryItemRepository" as ItemRepo
+participant "LoanRepository" as LoanRepo
+participant "FineService" as FineService
+participant "FineRuleService" as FineRule
+participant "LibraryItem" as Item
+participant "Loan" as Loan
+participant "FineRecord" as Fine
+
+Librarian -> Controller : return_book(barcode, librarian_id)
+Controller -> Service : return_book(barcode, librarian_id)
+
+' 1. 校验本馆藏书
+Service -> ItemRepo : get_by_barcode(barcode)
+ItemRepo --> Service : item
+alt 非本馆藏书
+    Service --> Controller : raise NotFoundError("非本馆藏书")
+    Controller --> Librarian : 400 非本馆藏书
+else 是本馆藏书
+    ' 2. 查找未归还借阅记录
+    Service -> LoanRepo : get_active_by_item(item.item_id)
+    LoanRepo --> Service : loan
+    alt 未找到借阅记录
+        Service --> Controller : raise NotFoundError("未找到借阅记录")
+        Controller --> Librarian : 400 未找到借阅记录
+    else 找到借阅记录
+        ' 3. 更新归还状态
+        Service -> Loan : markReturned(return_date)
+        Loan --> Service : status = RETURNED
+        Service -> LoanRepo : save(loan)
+        LoanRepo --> Service : loan
+        Service -> Item : markAvailable()
+        Item --> Service : status = AVAILABLE
+        Service -> ItemRepo : save(item)
+        ItemRepo --> Service : item
+
+        ' 4. 超期罚款计算
+        Service -> FineService : calculate_and_record(loan, return_date)
+        FineService -> FineRule : overdue_days(loan.due_date, return_date)
+        FineRule --> FineService : overdue_days
+        alt overdue_days <= 0 (未超期)
+            FineService --> Service : None (罚金为0)
+            Service --> Controller : ReturnResponse(overdue_days=0, fine_amount=0)
+            Controller --> Librarian : 200 还书成功
+        else overdue_days > 0 (超期)
+            FineService -> FineRule : get_rate(loan.item_type)
+            FineRule --> FineService : rate
+            FineService -> FineRule : calculate(loan.item_type, overdue_days)
+            FineRule --> FineService : amount
+            FineService -> Fine : create(loan, overdue_days, amount)
+            Fine --> FineService : fine
+            FineService --> Service : fine
+            Service --> Controller : ReturnResponse(overdue_days, fine_amount, fine_id)
+            Controller --> Librarian : 200 还书成功（含罚款）
+        end
+    end
+end
+
+@enduml
