@@ -1,0 +1,65 @@
+@startuml 包图 - 图书管理系统分层架构
+skinparam packageStyle rectangle
+
+package "presentation（表现层 / Controller）" {
+  [routers]
+}
+
+package "application（应用服务层）" {
+  [reader_service]
+  [card_service]
+  [catalog_service]
+  [circulation_service]
+  [reservation_service]
+  [fine_service]
+  [admin_service]
+}
+
+package "domain（领域层）" {
+  [reader]
+  [card]
+  [catalog]
+  [circulation]
+  [reservation]
+  [fine]
+  [admin]
+
+  package "策略 Strategies" {
+    [BorrowPolicy]
+    [FineRule]
+  }
+}
+
+package "dto（数据传输对象）" {
+  [schemas]
+}
+
+package "infrastructure（基础设施 / 持久化）" {
+  [repositories]
+  [database]
+}
+
+package "test（测试层）" {
+  [tests]
+}
+
+' ===== 依赖方向：由外向内 =====
+presentation ..> application
+presentation ..> dto
+application ..> domain
+application ..> dto
+application ..> infrastructure
+domain ..> dto
+infrastructure ..> domain
+
+' 约束标注
+note right of presentation
+  Controller 只调用 Application Service，
+  不得直接依赖 Repository
+end note
+
+note bottom of infrastructure
+  Infrastructure 实现领域层所需的 Repository 接口
+end note
+
+@enduml

@@ -1,0 +1,64 @@
+@startuml 用例图 - 图书管理系统
+left to right direction
+skinparam packageStyle rectangle
+
+' ===== 参与者 =====
+actor Reader as "读者 Reader"
+actor Student as "学生 Student"
+actor Teacher as "教师 Teacher"
+actor Librarian as "图书管理员 Librarian"
+actor SystemAdmin as "系统管理员 SystemAdmin"
+
+Reader <|-- Student
+Reader <|-- Teacher
+
+' ===== 读者用例 =====
+usecase "UC-001 注册账号" as UC_Register
+usecase "UC-002 查询图书" as UC_QueryBook
+usecase "UC-003 查询借阅信息" as UC_QueryLoan
+usecase "UC-004 预约图书" as UC_Reserve
+
+Reader --> UC_Register
+Reader --> UC_QueryBook
+Reader --> UC_QueryLoan
+Reader --> UC_Reserve
+
+' ===== 图书管理员用例 =====
+usecase "UC-101 办理借书" as UC_Borrow
+usecase "UC-102 办理还书" as UC_Return
+usecase "UC-103 查询读者借阅信息" as UC_QueryReaderLoan
+usecase "UC-110 计算超期罚款" as UC_CalcFine
+
+Librarian --> UC_Borrow
+Librarian --> UC_Return
+Librarian --> UC_QueryReaderLoan
+
+UC_Borrow ..> UC_ValidateCard : <<include>>
+UC_Borrow ..> UC_CheckPolicy : <<include>>
+UC_Return ..> UC_CalcFine : <<include>>
+
+usecase "验证借阅证" as UC_ValidateCard
+usecase "检查借阅规则" as UC_CheckPolicy
+
+' ===== 系统管理员用例 =====
+usecase "UC-201 办理借阅证" as UC_NewCard
+usecase "UC-202 删除借阅证" as UC_DelCard
+usecase "UC-203 添加图书管理员" as UC_AddLib
+usecase "UC-204 删除图书管理员" as UC_DelLib
+usecase "UC-205 添加图书标题信息" as UC_AddTitle
+usecase "UC-206 删除图书标题信息" as UC_DelTitle
+usecase "UC-207 添加馆藏副本" as UC_AddItem
+usecase "UC-208 删除馆藏副本" as UC_DelItem
+usecase "UC-209 维护借阅规则和罚款规则" as UC_Policy
+
+SystemAdmin --> UC_NewCard
+SystemAdmin --> UC_DelCard
+SystemAdmin --> UC_AddLib
+SystemAdmin --> UC_DelLib
+SystemAdmin --> UC_AddTitle
+SystemAdmin --> UC_DelTitle
+SystemAdmin --> UC_AddItem
+SystemAdmin --> UC_DelItem
+SystemAdmin --> UC_Policy
+
+@enduml

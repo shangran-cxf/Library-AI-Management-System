@@ -1,0 +1,151 @@
+@startuml 领域类图 - 图书管理系统
+hide methods
+skinparam classAttributeIconSize 0
+
+' ===== 枚举 =====
+enum ReaderType {
+  JUNIOR
+  UNDERGRADUATE
+  GRADUATE
+  DOCTOR
+  TEACHER
+}
+enum ItemType {
+  CHINESE_BOOK
+  FOREIGN_BOOK
+  CHINESE_MAGAZINE
+  FOREIGN_MAGAZINE
+  THESIS
+}
+enum LoanStatus {
+  BORROWING
+  RETURNED
+  OVERDUE
+}
+enum ReservationStatus {
+  ACTIVE
+  FULFILLED
+  CANCELLED
+}
+
+' ===== 读者 =====
+abstract class Reader {
+  - readerId
+  - name
+  - department
+  - readerType : ReaderType
+  - account
+  + borrowLimit()
+  + borrowDays()
+  + hasOverdue()
+  + currentLoanCount()
+}
+class StudentReader
+class TeacherReader
+Reader <|-- StudentReader
+Reader <|-- TeacherReader
+Reader --> ReaderType
+
+' ===== 借阅证 =====
+class BorrowCard {
+  - cardNo
+  - issueDate
+  - expireDate
+  - status
+  + isValid()
+}
+BorrowCard "1" -- "1" Reader : belongs to
+
+' ===== 管理员 =====
+class Librarian {
+  - librarianId
+  - name
+  - account
+}
+class SystemAdmin {
+  - adminId
+  - name
+  - account
+}
+
+' ===== 馆藏 =====
+class BookTitle {
+  - titleId
+  - title
+  - author
+  - isbn
+  - publisher
+  - category
+  - itemType : ItemType
+  + availableItemCount()
+}
+abstract class LibraryItem {
+  - itemId
+  - barcode
+  - status
+  - location
+  + isAvailable()
+  + markBorrowed()
+  + markAvailable()
+}
+class Book
+class Magazine
+class Thesis
+LibraryItem <|-- Book
+LibraryItem <|-- Magazine
+LibraryItem <|-- Thesis
+BookTitle "1" -- "*" LibraryItem : has copies
+LibraryItem --> ItemType
+
+' ===== 借阅记录 =====
+class Loan {
+  - loanId
+  - borrowDate
+  - dueDate
+  - returnDate
+  - status : LoanStatus
+  - isOverdue
+  + isReturned()
+  + overdueDays()
+}
+Loan "*" -- "1" Reader
+Loan "*" -- "1" LibraryItem
+Loan --> LoanStatus
+
+' ===== 预约 =====
+class Reservation {
+  - reservationId
+  - createdAt
+  - status : ReservationStatus
+  - queuePosition
+  + isActive()
+}
+Reservation "*" -- "1" Reader
+Reservation "*" -- "1" BookTitle
+Reservation --> ReservationStatus
+
+' ===== 规则策略 =====
+class BorrowPolicy {
+  + getMaxBorrowCount(readerType)
+  + getBorrowDays(readerType)
+  + canBorrow(reader, currentLoans)
+}
+class FineRule {
+  + getRate(itemType)
+  + calculateFine(itemType, overdueDays)
+}
+BorrowPolicy ..> ReaderType
+FineRule ..> ItemType
+
+' ===== 罚款记录 =====
+class FineRecord {
+  - fineId
+  - overdueDays
+  - amount
+  - createdAt
+  - status
+}
+FineRecord "*" -- "1" Loan
+FineRecord ..> ItemType
+
+@enduml
