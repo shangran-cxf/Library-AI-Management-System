@@ -28,6 +28,8 @@ usecase "UC-101 办理借书" as UC_Borrow
 usecase "UC-102 办理还书" as UC_Return
 usecase "UC-103 查询读者借阅信息" as UC_QueryReaderLoan
 usecase "UC-110 计算超期罚款" as UC_CalcFine
+usecase "验证借阅证" as UC_ValidateCard
+usecase "检查借阅规则" as UC_CheckPolicy
 
 Librarian --> UC_Borrow
 Librarian --> UC_Return
@@ -36,9 +38,6 @@ Librarian --> UC_QueryReaderLoan
 UC_Borrow ..> UC_ValidateCard : <<include>>
 UC_Borrow ..> UC_CheckPolicy : <<include>>
 UC_Return ..> UC_CalcFine : <<include>>
-
-usecase "验证借阅证" as UC_ValidateCard
-usecase "检查借阅规则" as UC_CheckPolicy
 
 ' ===== 系统管理员用例 =====
 usecase "UC-201 办理借阅证" as UC_NewCard
