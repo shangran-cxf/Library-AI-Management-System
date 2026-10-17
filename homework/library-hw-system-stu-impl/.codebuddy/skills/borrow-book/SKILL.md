@@ -10,11 +10,13 @@ metadata:
 
 ## 后端真实 API 映射
 基址 `http://localhost:8001`，统一返回 `{code, message, data}`。
+本表为速查摘要，字段完整定义以 `circulation-agent` 的 API 映射表为准；两者冲突时以后者为准。
 | 能力 | 方法 | 路径 | 请求体 / 参数 |
 |------|------|------|--------------|
-| 查配额 | GET | `/api/borrow/check-quota/{user_id}` | 路径参数，返回 `has_overdue`/`remaining` |
+| 用户信息 | GET | `/api/users/{user_id}` | 路径参数，返回 `user_id`/`username`/`role`/`max_borrow`；不存在时 `code=404` |
+| 查配额 | GET | `/api/borrow/check-quota/{user_id}` | 路径参数，返回 `current_borrowed`/`max_borrow`/`remaining`/`has_overdue`/`overdue_count` |
 | 图书详情 | GET | `/api/books/{book_id}` | 路径参数，返回 `available_copies`/`status` |
-| 借阅 | POST | `/api/borrow` | `{user_id, book_id}` |
+| 借阅 | POST | `/api/borrow` | `{user_id, book_id}`，返回 `record_id`/`book_title`/`borrow_date`/`due_date`/`remaining_quota` |
 
 ## Input
 - user_id: integer（必需）- 用户ID
@@ -69,9 +71,10 @@ response = httpx.post(
 result = response.json()
 ```
 
-### 第5步：返回结果
-- 成功：返回借阅成功信息，包含书名、借阅日期、应还日期
-- 失败：返回具体的失败原因（配额已满、图书已借出等）
+### 第5步：判断响应码并返回结果
+- `code == 200`：返回借阅成功信息，包含 `data.book_title`、`data.borrow_date`、`data.due_date`
+- `code == 400`：把 `message` 原样透传给用户（如"借阅已满（3/3），请先归还图书"、"图书已全部借出"）
+- `code == 500`：返回"系统繁忙，请稍后重试"
 
 ## Acceptance Criteria
 - 每一步必须调用对应的 API，不可直接操作数据库
