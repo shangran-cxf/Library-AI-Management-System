@@ -58,6 +58,7 @@ Library-AI-Management-System/
     schemas/             # DTO（Pydantic）
     exceptions/          # 自定义异常层次
   tests/                 # pytest 自动化测试
+  homework/              # 扩展作业（续借 + 图书评论评分，独立 FastAPI 服务，端口 8001）
   requirements.txt
   pytest.ini
   README.md
@@ -124,6 +125,15 @@ pytest -v
 "Specs 优先 → Agent 起草 → 人类确认 → 冻结 baseline → Agent 实现 → 测试闭环"
 的流程。历次 Agent 使用记录见 [specs/19-ai-usage-log.md](specs/19-ai-usage-log.md)。
 
+## 扩展作业
+
+[homework/library-hw-system-stu-impl](homework/library-hw-system-stu-impl) 是独立的对话式图书管理系统扩展作业：
+在后端新增「续借」与「图书评论评分」两个能力，并同步更新 `.codebuddy` 下的 Agent / Skill 提示词。
+
+- 实现说明：[homework/library-hw-system-stu-impl/README.md](homework/library-hw-system-stu-impl/README.md)
+- 接口 curl 实测：[接口测试记录.md](homework/library-hw-system-stu-impl/接口测试记录.md)
+- 运行方式：`cd homework/library-hw-system-stu-impl/backend` → `python main.py`（端口 8001）
+
 ## 实验阶段
 
 - **实验一**：应用系统的架构设计（需求 → 用例 → 领域模型 → 架构 → 数据库设计）
@@ -135,6 +145,7 @@ pytest -v
 - [x] 实验一：架构设计与 Spec 建模（baseline：`experiment1-specs-baseline-v1`）
 - [x] 实验二 Spec：详细设计 / 顺序图 / API / 测试计划 / 任务拆解（baseline：`experiment2-specs-baseline-v1`）
 - [x] 实验二实现：分层代码 + 38 项自动化测试全绿
+- [x] 扩展作业：续借 + 图书评论评分（15 项测试通过，已并入 `homework/`）
 
 
 ## specs 目录说明
@@ -160,14 +171,3 @@ pytest -v
 | 18-review-checklist.md | 人工审查清单 |
 | 19-ai-usage-log.md | AI 使用记录 |
 | constitution.md | 开发宪法（Agent 行为约束） |
-
-## 实验阶段
-
-- **实验一**：应用系统的架构设计（需求 → 用例 → 领域模型 → 架构 → 数据库设计）
-- **实验二**：应用系统的详细设计（详细设计 → 顺序图 → API → 测试计划 → 代码实现）
-
-## 当前进度
-
-- [x] 建立项目骨架与 Git 仓库
-- [ ] 实验一：架构设计与 Spec 建模
-- [ ] 实验二：详细设计与 Agent 实现
